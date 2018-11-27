@@ -21,6 +21,7 @@ defmodule Logster.Plugs.Logger do
       Default is `Logster.StringFormatter`.
     * `:renames` - Map of fields to rename, for example: `%{status: :mystatus}`.
     * `:excludes` - List of fields to exclude from the log, for example: `[:params]`.
+       Default value is [:resp_body], i.e. response body is excluded from the log.
   """
 
   require Logger
@@ -51,18 +52,24 @@ defmodule Logster.Plugs.Logger do
         |> put_field(:status, renames, conn.status)
         |> put_field(:duration, renames, formatted_duration(duration))
         |> put_field(:state, renames, conn.state)
+        |> put_field(:resp_body, renames, conn.resp_body)
         |> Keyword.merge(
           headers(
             conn.req_headers,
             Application.get_env(:logster, :allowed_headers, @default_allowed_headers)
           )
         )
-        |> exclude(Keyword.get(opts, :excludes, []))
+        |> exclude(Keyword.get(opts, :excludes, [:resp_body]))
         |> formatter.format
       end)
 
       conn
     end)
+  end
+
+  defp put_field(keyword, default_key, renames, value) when is_list(value) do
+    # Convert IO lists to strings
+    put_field(keyword, default_key, renames, IO.chardata_to_string(value))
   end
 
   defp put_field(keyword, default_key, renames, value) do
