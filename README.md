@@ -57,6 +57,10 @@ You can update the list of parameters that are filtered by adding the following 
 config :logster, :filter_parameters, ["password", "secret", "token"]
 ```
 
+Note that response body could contain sensitive data as well.
+If the body is included in the log, you should apply application-specific filtering of `:resp_body` in a custom formatter.
+
+
 ### HTTP headers support
 
 By default, Logster won't parse and log HTTP headers.
@@ -161,16 +165,26 @@ It will log the following:
 You can exclude fields with `:excludes`:
 
 ```elixir
-plug Logster.Plugs.Logger, excludes: [:params, :status, :state]
+plug Logster.Plugs.Logger, excludes: [:params, :status, :state, :resp_body]
 ```
 It will log the following:
 ```
 [info] method=GET path=/articles/some-article format=html controller=HelloPhoenix.ArticleController action=show duration=0.402
 ```
+Note that `:resp_body` is excluded by default (when `excludes:` is not configured). If you want all fields including response body, set
+```elixir
+plug Logster.Plugs.Logger, excludes: []
+```
+
+
 
 #### Writing your own formatter
 
 To write your own formatter, all that is required is a module which defines a `format/1` function, which accepts a keyword list and returns a string.
+
+Since Elixir 1.7, the `format/1` function can alternatively return a tuple `{message, list_of_keywords}`. Keywords are added to logger metadata. \
+This approach would give you a freedom to customize the format of log messages with Logger formatters tailored for your Logger backends.
+See Elixir Logger documentation for details.
 
 ## Development
 

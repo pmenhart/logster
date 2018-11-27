@@ -171,6 +171,8 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "status=200"
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
+    # :resp_body is excluded by default
+    refute message =~ "resp_body="
 
     {_conn, message} = conn(:post, "/hello/world", foo: :bar) |> call
 
@@ -180,6 +182,7 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "status=200"
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
+    refute message =~ "resp_body="
   end
 
   test "handles params with spaces" do
@@ -214,6 +217,7 @@ defmodule Logster.Plugs.LoggerTest do
     assert message =~ "status=200"
     assert message =~ ~r/duration=\d+.\d{3}/u
     assert message =~ "state=set"
+    refute message =~ "resp_body"
   end
 
   test "filters parameters from the log" do
@@ -313,6 +317,8 @@ defmodule Logster.Plugs.LoggerTest do
       end)
 
     refute message =~ "params={}"
+    # MyExcludeFieldsPlug does not exclude :resp_body
+    assert message =~ "resp_body=Passthrough"
   end
 
   test "[TextFormatter] log headers: no default headers, no output" do
